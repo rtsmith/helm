@@ -17,6 +17,7 @@ package getter
 
 import (
 	"bytes"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -83,6 +84,11 @@ func (p *pluginGetter) Get(href string, options ...Option) (*bytes.Buffer, error
 		return nil, err
 	}
 	return buf, nil
+}
+
+// Filename will return the name of the file. For the pluginGetter, this is simply the last element of the URL Path.
+func (g *pluginGetter) Filename(u *url.URL, version string) string {
+	return filepath.Base(u.Path)
 }
 
 // NewPluginGetter constructs a valid plugin getter

@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"helm.sh/helm/v3/pkg/getter"
 	"io"
 	"path/filepath"
 
@@ -24,7 +25,6 @@ import (
 	"helm.sh/helm/v3/cmd/helm/require"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/downloader"
-	"helm.sh/helm/v3/pkg/getter"
 )
 
 const dependencyUpDesc = `
@@ -43,7 +43,7 @@ in the Chart.yaml file, but (b) at the wrong version.
 `
 
 // newDependencyUpdateCmd creates a new dependency update command.
-func newDependencyUpdateCmd(out io.Writer) *cobra.Command {
+func newDependencyUpdateCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	client := action.NewDependency()
 
 	cmd := &cobra.Command{
@@ -57,12 +57,16 @@ func newDependencyUpdateCmd(out io.Writer) *cobra.Command {
 			if len(args) > 0 {
 				chartpath = filepath.Clean(args[0])
 			}
+			getters := getter.All(settings)
+			if FeatureGateOCI.IsEnabled() {
+				getters = append(getters, getter.NewRegistryGetterProvider(cfg.RegistryClient))
+			}
 			man := &downloader.Manager{
 				Out:              out,
 				ChartPath:        chartpath,
 				Keyring:          client.Keyring,
 				SkipUpdate:       client.SkipRefresh,
-				Getters:          getter.All(settings),
+				Getters:          getters,
 				RepositoryConfig: settings.RepositoryConfig,
 				RepositoryCache:  settings.RepositoryCache,
 				Debug:            settings.Debug,

@@ -40,7 +40,7 @@ If no lock file is found, 'helm dependency build' will mirror the behavior
 of 'helm dependency update'.
 `
 
-func newDependencyBuildCmd(out io.Writer) *cobra.Command {
+func newDependencyBuildCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	client := action.NewDependency()
 
 	cmd := &cobra.Command{
@@ -53,11 +53,15 @@ func newDependencyBuildCmd(out io.Writer) *cobra.Command {
 			if len(args) > 0 {
 				chartpath = filepath.Clean(args[0])
 			}
+			getters := getter.All(settings)
+			if FeatureGateOCI.IsEnabled() {
+				getters = append(getters, getter.NewRegistryGetterProvider(cfg.RegistryClient))
+			}
 			man := &downloader.Manager{
 				Out:              out,
 				ChartPath:        chartpath,
 				Keyring:          client.Keyring,
-				Getters:          getter.All(settings),
+				Getters:          getters,
 				RepositoryConfig: settings.RepositoryConfig,
 				RepositoryCache:  settings.RepositoryCache,
 				Debug:            settings.Debug,

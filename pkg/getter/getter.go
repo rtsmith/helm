@@ -18,10 +18,9 @@ package getter
 
 import (
 	"bytes"
-
 	"github.com/pkg/errors"
-
 	"helm.sh/helm/v3/pkg/cli"
+	"net/url"
 )
 
 // options are generic parameters to be provided to the getter during instantiation.
@@ -85,6 +84,8 @@ func WithTLSClientConfig(certFile, keyFile, caFile string) Option {
 type Getter interface {
 	// Get file content by url string
 	Get(url string, options ...Option) (*bytes.Buffer, error)
+	// Retrieve the filename given a source URL
+	Filename(url *url.URL, version string) string
 }
 
 // Constructor is the function for every getter which creates a specific instance

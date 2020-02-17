@@ -205,6 +205,13 @@ func FindChartInRepoURL(repoURL, chartName, chartVersion, certFile, keyFile, caF
 // without adding repo to repositories, like FindChartInRepoURL,
 // but it also receives credentials for the chart repository.
 func FindChartInAuthRepoURL(repoURL, username, password, chartName, chartVersion, certFile, keyFile, caFile string, getters getter.Providers) (string, error) {
+	// If the oci@ prefix is used in the URL, this is an URL to an OCI chart repository, meaning the
+	// URL is already fully qualified and points to the specific repo in question. Hence, we will
+	// short-circuit the process here and check the validity of the chart after downloading it.
+	//if strings.HasPrefix(repoURL, "oci://") {
+	//	return repoURL, nil
+	//	return fmt.Sprintf("https://%s", strings.TrimPrefix(repoURL, "https+oci://")), nil
+	//}
 
 	// Download and write the index file to a temporary location
 	buf := make([]byte, 20)

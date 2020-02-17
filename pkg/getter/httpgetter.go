@@ -20,6 +20,8 @@ import (
 	"crypto/tls"
 	"io"
 	"net/http"
+	"net/url"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 
@@ -39,6 +41,11 @@ func (g *HTTPGetter) Get(href string, options ...Option) (*bytes.Buffer, error) 
 		opt(&g.opts)
 	}
 	return g.get(href)
+}
+
+// Filename will return the name of the file. For the HTTPGetter, this is simply the last element of the URL Path.
+func (g *HTTPGetter) Filename(u *url.URL, version string) string {
+	return filepath.Base(u.Path)
 }
 
 func (g *HTTPGetter) get(href string) (*bytes.Buffer, error) {
