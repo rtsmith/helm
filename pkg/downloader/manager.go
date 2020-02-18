@@ -550,7 +550,7 @@ func (m *Manager) parallelRepoUpdate(repos []*repo.Entry) error {
 // repoURL is the repository to search
 //
 // If it finds a URL that is "relative", it will prepend the repoURL.
-func (m *Manager) findChartURL(name, version, repoURL string, repos map[string]*repo.ChartRepository) (chartUrl, username, password string, err error) {
+func (m *Manager) findChartURL(name, version, repoURL string, repos map[string]*repo.ChartRepository) (chartURL, username, password string, err error) {
 	for _, cr := range repos {
 		if urlutil.Equal(repoURL, cr.Config.URL) {
 			var entry repo.ChartVersions
@@ -563,7 +563,7 @@ func (m *Manager) findChartURL(name, version, repoURL string, repos map[string]*
 			if err != nil {
 				return
 			}
-			chartUrl, err = normalizeURL(repoURL, ve.URLs[0])
+			chartURL, err = normalizeURL(repoURL, ve.URLs[0])
 			if err != nil {
 				return
 			}
@@ -579,16 +579,16 @@ func (m *Manager) findChartURL(name, version, repoURL string, repos map[string]*
 	}
 
 	if u.Scheme == "oci" {
-		chartUrl = repoURL
+		chartURL = repoURL
 		return
 	}
 
-	chartUrl, err = repo.FindChartInRepoURL(repoURL, name, version, "", "", "", m.Getters)
+	chartURL, err = repo.FindChartInRepoURL(repoURL, name, version, "", "", "", m.Getters)
 	if err == nil {
 		return
 	}
 	err = errors.Errorf("chart %s not found in %s", name, repoURL)
-	return
+	return chartURL, username, password, err
 }
 
 // findEntryByName finds an entry in the chart repository whose name matches the given name.

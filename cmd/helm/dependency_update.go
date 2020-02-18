@@ -16,15 +16,16 @@ limitations under the License.
 package main
 
 import (
-	"helm.sh/helm/v3/pkg/getter"
 	"io"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"helm.sh/helm/v3/cmd/helm/require"
+	"helm.sh/helm/v3/internal/experimental/registry"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/downloader"
+	"helm.sh/helm/v3/pkg/getter"
 )
 
 const dependencyUpDesc = `
@@ -59,7 +60,7 @@ func newDependencyUpdateCmd(cfg *action.Configuration, out io.Writer) *cobra.Com
 			}
 			getters := getter.All(settings)
 			if FeatureGateOCI.IsEnabled() {
-				getters = append(getters, getter.NewRegistryGetterProvider(cfg.RegistryClient))
+				getters = append(getters, registry.NewRegistryGetterProvider(cfg.RegistryClient))
 			}
 			man := &downloader.Manager{
 				Out:              out,

@@ -19,10 +19,12 @@ package registry // import "helm.sh/helm/v3/internal/experimental/registry"
 import (
 	"bytes"
 	"fmt"
-	"helm.sh/helm/v3/pkg/chartutil"
 	"net/url"
 	"path/filepath"
 	"strings"
+
+	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/getter"
 )
 
 // Getter is the HTTP(/S) backend handler for OCI image registries.
@@ -30,7 +32,20 @@ type Getter struct {
 	Client *Client
 }
 
-func (g *Getter) Get(href string) (*bytes.Buffer, error) {
+func NewRegistryGetter(c *Client) *Getter {
+	return &Getter{Client: c}
+}
+
+func NewRegistryGetterProvider(c *Client) getter.Provider {
+	return getter.Provider{
+		Schemes: []string{"oci"},
+		New: func(options ...getter.Option) (g getter.Getter, e error) {
+			return NewRegistryGetter(c), nil
+		},
+	}
+}
+
+func (g *Getter) Get(href string, options ...getter.Option) (*bytes.Buffer, error) {
 	u, err := url.Parse(href)
 
 	if err != nil {

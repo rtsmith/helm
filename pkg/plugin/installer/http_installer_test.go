@@ -21,6 +21,7 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -43,6 +44,10 @@ type TestHTTPGetter struct {
 
 func (t *TestHTTPGetter) Get(href string, _ ...getter.Option) (*bytes.Buffer, error) {
 	return t.MockResponse, t.MockError
+}
+
+func (t *TestHTTPGetter) Filename(u *url.URL, version string) string {
+	return filepath.Base(u.Path)
 }
 
 // Fake plugin tarball data

@@ -123,6 +123,7 @@ func Save(c *chart.Chart, outDir string) (string, error) {
 
 	if err != nil {
 		rollback = true
+		return filename, err
 	}
 
 	defer func() {

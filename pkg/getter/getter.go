@@ -18,9 +18,11 @@ package getter
 
 import (
 	"bytes"
-	"github.com/pkg/errors"
-	"helm.sh/helm/v3/pkg/cli"
 	"net/url"
+
+	"github.com/pkg/errors"
+
+	"helm.sh/helm/v3/pkg/cli"
 )
 
 // options are generic parameters to be provided to the getter during instantiation.

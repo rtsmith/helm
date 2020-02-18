@@ -87,7 +87,7 @@ func (p *pluginGetter) Get(href string, options ...Option) (*bytes.Buffer, error
 }
 
 // Filename will return the name of the file. For the pluginGetter, this is simply the last element of the URL Path.
-func (g *pluginGetter) Filename(u *url.URL, version string) string {
+func (p *pluginGetter) Filename(u *url.URL, version string) string {
 	return filepath.Base(u.Path)
 }
 
