@@ -106,3 +106,7 @@ func NewPluginGetter(command string, settings *cli.EnvSettings, name, base strin
 		return result, nil
 	}
 }
+
+func (p *pluginGetter) URL(u *url.URL, version string) (string, error) {
+	return defaultURLTransformation(u, version)
+}

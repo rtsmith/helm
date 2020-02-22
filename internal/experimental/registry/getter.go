@@ -18,6 +18,7 @@ package registry // import "helm.sh/helm/v3/internal/experimental/registry"
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/url"
 	"path/filepath"
@@ -85,4 +86,21 @@ func (g *Getter) Filename(u *url.URL, version string) string {
 	parts := strings.Split(filepath.Base(u.Path), ":")
 
 	return fmt.Sprintf("%s-%s.tgz", parts[0], version)
+}
+
+// the URL formatter will handle adding the version as the tag if none was specified, and will error if neither tag nor version is specified
+func (g *Getter) URL(u *url.URL, version string) (string, error) {
+	parts := strings.Split(filepath.Base(u.Path), ":")
+
+	if len(parts) == 1 && version == "" {
+		return "", errors.New("no version or tag provided")
+	}
+
+	if len(parts) == 2 {
+		return u.String(), nil
+	}
+
+	u.Path = fmt.Sprintf("%s:%s", u.Path, version)
+
+	return u.String(), nil
 }

@@ -88,6 +88,8 @@ type Getter interface {
 	Get(url string, options ...Option) (*bytes.Buffer, error)
 	// Retrieve the filename given a source URL
 	Filename(url *url.URL, version string) string
+	// Allow the getter to alter the download URL before retrieval
+	URL(u *url.URL, version string) (string, error)
 }
 
 // Constructor is the function for every getter which creates a specific instance

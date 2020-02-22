@@ -130,6 +130,10 @@ func (g *CustomGetter) Get(href string, options ...getter.Option) (*bytes.Buffer
 	return bytes.NewBuffer(indexBytes), nil
 }
 
+func (g *CustomGetter) URL(u *url.URL, version string) (string, error) {
+	return u.String(), nil
+}
+
 func (g *CustomGetter) Filename(u *url.URL, version string) string {
 	return filepath.Base(u.Path)
 }

@@ -135,3 +135,7 @@ func (g *HTTPGetter) httpClient() (*http.Client, error) {
 
 	return http.DefaultClient, nil
 }
+
+func (g *HTTPGetter) URL(u *url.URL, version string) (string, error) {
+	return defaultURLTransformation(u, version)
+}

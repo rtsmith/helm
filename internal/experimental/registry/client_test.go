@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -37,6 +36,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/crypto/bcrypt"
 
+	"helm.sh/helm/v3/internal/test"
 	"helm.sh/helm/v3/pkg/chart"
 )
 
@@ -101,7 +101,7 @@ func (suite *RegistryClientTestSuite) SetupSuite() {
 
 	// Registry config
 	config := &configuration.Configuration{}
-	port, err := getFreePort()
+	port, err := test.GetFreePort()
 	suite.Nil(err, "no error finding free port for test registry")
 	suite.DockerRegistryHost = fmt.Sprintf("localhost:%d", port)
 	config.HTTP.Addr = fmt.Sprintf(":%d", port)
@@ -234,19 +234,4 @@ func (suite *RegistryClientTestSuite) Test_7_Logout() {
 
 func TestRegistryClientTestSuite(t *testing.T) {
 	suite.Run(t, new(RegistryClientTestSuite))
-}
-
-// borrowed from https://github.com/phayes/freeport
-func getFreePort() (int, error) {
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		return 0, err
-	}
-
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return 0, err
-	}
-	defer l.Close()
-	return l.Addr().(*net.TCPAddr).Port, nil
 }
