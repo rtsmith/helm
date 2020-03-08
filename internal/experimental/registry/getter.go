@@ -39,7 +39,7 @@ func NewRegistryGetter(c *Client) *Getter {
 
 func NewRegistryGetterProvider(c *Client) getter.Provider {
 	return getter.Provider{
-		Schemes: []string{"oci"},
+		Schemes: []string{OciProtocol},
 		New: func(options ...getter.Option) (g getter.Getter, e error) {
 			return NewRegistryGetter(c), nil
 		},

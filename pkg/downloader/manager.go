@@ -31,6 +31,7 @@ import (
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
 
+	"helm.sh/helm/v3/internal/experimental/registry"
 	"helm.sh/helm/v3/internal/resolver"
 	"helm.sh/helm/v3/internal/third_party/dep/fs"
 	"helm.sh/helm/v3/internal/urlutil"
@@ -401,7 +402,7 @@ Loop:
 		}
 
 		// if repo is an OCI registry, continue
-		if strings.HasPrefix(dd.Repository, "oci://") {
+		if strings.HasPrefix(dd.Repository, fmt.Sprintf("%s://", registry.OciProtocol)) {
 			continue
 		}
 
@@ -578,7 +579,7 @@ func (m *Manager) findChartURL(name, version, repoURL string, repos map[string]*
 		return
 	}
 
-	if u.Scheme == "oci" {
+	if u.Scheme == registry.OciProtocol {
 		chartURL = repoURL
 		return
 	}
