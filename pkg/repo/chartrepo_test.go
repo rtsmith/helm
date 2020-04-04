@@ -130,12 +130,13 @@ func (g *CustomGetter) Get(href string, options ...getter.Option) (*bytes.Buffer
 	return bytes.NewBuffer(indexBytes), nil
 }
 
-func (g *CustomGetter) URL(u *url.URL, version string) (string, error) {
-	return u.String(), nil
-}
+func (g *CustomGetter) GetWithDetails(u *url.URL, version string, options ...getter.Option) (getter.ChartResponse, error) {
+	data, err := g.Get(u.String(), options...)
 
-func (g *CustomGetter) Filename(u *url.URL, version string) string {
-	return filepath.Base(u.Path)
+	return getter.ChartResponse{
+		ChartContent: data,
+		Filename: filepath.Base(u.String()),
+	}, err
 }
 
 func TestIndexCustomSchemeDownload(t *testing.T) {

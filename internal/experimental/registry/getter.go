@@ -81,26 +81,20 @@ func (g *Getter) Get(href string, options ...getter.Option) (*bytes.Buffer, erro
 	return buf, err
 }
 
-// Filename will return the name of the file. For the RegistryGetter, this is the last element of the URL, with the optional tag stripped, and the version and tgz extension appended.
-func (g *Getter) Filename(u *url.URL, version string) string {
-	parts := strings.Split(filepath.Base(u.Path), ":")
-
-	return fmt.Sprintf("%s-%s.tgz", parts[0], version)
-}
-
-// the URL formatter will handle adding the version as the tag if none was specified, and will error if neither tag nor version is specified
-func (g *Getter) URL(u *url.URL, version string) (string, error) {
+func (g *Getter) GetWithDetails(u *url.URL, version string, options ...getter.Option) (getter.ChartResponse, error) {
 	parts := strings.Split(filepath.Base(u.Path), ":")
 
 	if len(parts) == 1 && version == "" {
-		return "", errors.New("no version or tag provided")
+		return getter.ChartResponse{}, errors.New("no version or tag provided")
 	}
 
-	if len(parts) == 2 {
-		return u.String(), nil
+	if len(parts) != 2 {
+		u.Path = fmt.Sprintf("%s:%s", u.Path, version)
 	}
 
-	u.Path = fmt.Sprintf("%s:%s", u.Path, version)
-
-	return u.String(), nil
+	res, err := g.Get(u.String(), options...)
+	return getter.ChartResponse{
+		ChartContent: res,
+		Filename: g.Filename(u, version),
+	}, err
 }

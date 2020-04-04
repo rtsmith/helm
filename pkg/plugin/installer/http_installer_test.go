@@ -46,12 +46,13 @@ func (t *TestHTTPGetter) Get(href string, _ ...getter.Option) (*bytes.Buffer, er
 	return t.MockResponse, t.MockError
 }
 
-func (t *TestHTTPGetter) Filename(u *url.URL, version string) string {
-	return filepath.Base(u.Path)
-}
+func (t *TestHTTPGetter) GetWithDetails(u *url.URL, _ string, _ ...getter.Option) (getter.ChartResponse, error) {
+	data, err := t.Get(u.String())
 
-func (t *TestHTTPGetter) URL(u *url.URL, version string) (string, error) {
-	return u.String(), nil
+	return getter.ChartResponse{
+		ChartContent: data,
+		Filename: filepath.Base(u.String()),
+	}, err
 }
 
 // Fake plugin tarball data

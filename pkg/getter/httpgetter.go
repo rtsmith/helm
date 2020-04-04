@@ -43,9 +43,13 @@ func (g *HTTPGetter) Get(href string, options ...Option) (*bytes.Buffer, error) 
 	return g.get(href)
 }
 
-// Filename will return the name of the file. For the HTTPGetter, this is simply the last element of the URL Path.
-func (g *HTTPGetter) Filename(u *url.URL, version string) string {
-	return filepath.Base(u.Path)
+func (g *HTTPGetter) GetWithDetails(u *url.URL, version string, options ...Option) (ChartResponse, error) {
+	data, err := g.Get(u.String(), options...)
+
+	return ChartResponse{
+		ChartContent: data,
+		Filename:     filepath.Base(u.String()),
+	}, err
 }
 
 func (g *HTTPGetter) get(href string) (*bytes.Buffer, error) {
@@ -134,8 +138,4 @@ func (g *HTTPGetter) httpClient() (*http.Client, error) {
 	}
 
 	return http.DefaultClient, nil
-}
-
-func (g *HTTPGetter) URL(u *url.URL, version string) (string, error) {
-	return defaultURLTransformation(u, version)
 }

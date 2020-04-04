@@ -86,9 +86,13 @@ func (p *pluginGetter) Get(href string, options ...Option) (*bytes.Buffer, error
 	return buf, nil
 }
 
-// Filename will return the name of the file. For the pluginGetter, this is simply the last element of the URL Path.
-func (p *pluginGetter) Filename(u *url.URL, version string) string {
-	return filepath.Base(u.Path)
+func (p *pluginGetter) GetWithDetails(u *url.URL, version string, options ...Option) (ChartResponse, error) {
+	data, err := p.Get(u.String(), options...)
+
+	return ChartResponse{
+		ChartContent: data,
+		Filename: filepath.Base(u.String()),
+	}, err
 }
 
 // NewPluginGetter constructs a valid plugin getter
@@ -105,8 +109,4 @@ func NewPluginGetter(command string, settings *cli.EnvSettings, name, base strin
 		}
 		return result, nil
 	}
-}
-
-func (p *pluginGetter) URL(u *url.URL, version string) (string, error) {
-	return defaultURLTransformation(u, version)
 }

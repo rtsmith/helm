@@ -39,6 +39,11 @@ type options struct {
 	userAgent             string
 }
 
+type ChartResponse struct {
+	ChartContent *bytes.Buffer
+	Filename     string
+}
+
 // Option allows specifying various settings configurable by the user for overriding the defaults
 // used when performing Get operations with the Getter.
 type Option func(*options)
@@ -86,10 +91,8 @@ func WithTLSClientConfig(certFile, keyFile, caFile string) Option {
 type Getter interface {
 	// Get file content by url string
 	Get(url string, options ...Option) (*bytes.Buffer, error)
-	// Retrieve the filename given a source URL
-	Filename(url *url.URL, version string) string
-	// Allow the getter to alter the download URL before retrieval
-	URL(u *url.URL, version string) (string, error)
+	// Get file content and metadata by url
+	GetWithDetails(url *url.URL, version string, options ...Option) (ChartResponse, error)
 }
 
 // Constructor is the function for every getter which creates a specific instance
