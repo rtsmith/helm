@@ -25,7 +25,6 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 
 	"helm.sh/helm/v3/internal/tlsutil"
 	"helm.sh/helm/v3/internal/version"
@@ -247,16 +246,4 @@ func TestDownloadInsecureSkipTLSVerify(t *testing.T) {
 	if _, err = g.Get(u.String()); err != nil {
 		t.Error(err)
 	}
-}
-
-func TestHTTPGetter_Filename(t *testing.T) {
-	g, err := NewHTTPGetter()
-	if err != nil {
-		t.Fatal(err)
-	}
-	u, err := url.Parse("https://example.com/charts/alpine-0.1.0.tgz")
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.Equal(t, "alpine-0.1.0.tgz", g.Filename(u, "0.1.0"))
 }

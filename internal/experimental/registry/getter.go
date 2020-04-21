@@ -95,6 +95,12 @@ func (g *Getter) GetWithDetails(u *url.URL, version string, options ...getter.Op
 	res, err := g.Get(u.String(), options...)
 	return getter.ChartResponse{
 		ChartContent: res,
-		Filename: g.Filename(u, version),
+		Filename:     g.filename(u, version),
 	}, err
+}
+
+func (g *Getter) filename(u *url.URL, version string) string {
+	parts := strings.Split(filepath.Base(u.Path), ":")
+
+	return fmt.Sprintf("%s-%s.tgz", parts[0], version)
 }

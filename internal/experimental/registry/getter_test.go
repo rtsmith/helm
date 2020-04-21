@@ -46,6 +46,11 @@ type RegistryGetterSuite struct {
 	DockerRegistryHost string
 	CacheRootDir       string
 	RegistryClient     *Client
+	SampleCharts       struct {
+		OldTag    *chart.Chart
+		NewTag    *chart.Chart
+		LatestTag *chart.Chart
+	}
 }
 
 func (suite *RegistryGetterSuite) SetupTest() {
@@ -113,15 +118,42 @@ func (suite *RegistryGetterSuite) SetupTest() {
 	go dockerRegistry.ListenAndServe()
 	suite.RegistryClient.Login(suite.DockerRegistryHost, testUsername, testPassword, false)
 
-	ref, _ := ParseReference(fmt.Sprintf("%s/testrepo/testchart:1.2.3", suite.DockerRegistryHost))
-	ch := &chart.Chart{}
-	ch.Metadata = &chart.Metadata{
+	ref1, _ := ParseReference(fmt.Sprintf("%s/testrepo/testchart:0.1.0", suite.DockerRegistryHost))
+	ref2, _ := ParseReference(fmt.Sprintf("%s/testrepo/testchart:1.2.3", suite.DockerRegistryHost))
+	ref2Latest, _ := ParseReference(fmt.Sprintf("%s/testrepo/testchart:latest", suite.DockerRegistryHost))
+
+	ch1 := &chart.Chart{}
+	ch1.Metadata = &chart.Metadata{
+		APIVersion: "v1",
+		Name:       "testchart",
+		Version:    "0.1.0",
+	}
+	err = suite.RegistryClient.SaveChart(ch1, ref1)
+	suite.Nil(err)
+	err = suite.RegistryClient.PushChart(ref1)
+	suite.Nil(err)
+
+	ch2 := &chart.Chart{}
+	ch2.Metadata = &chart.Metadata{
 		APIVersion: "v1",
 		Name:       "testchart",
 		Version:    "1.2.3",
 	}
-	suite.RegistryClient.SaveChart(ch, ref)
-	suite.RegistryClient.PushChart(ref)
+
+	err = suite.RegistryClient.SaveChart(ch2, ref2)
+	suite.Nil(err)
+	err = suite.RegistryClient.PushChart(ref2)
+	suite.Nil(err)
+	err = suite.RegistryClient.SaveChart(ch2, ref2Latest)
+	suite.Nil(err)
+	err = suite.RegistryClient.PushChart(ref2Latest)
+	suite.Nil(err)
+
+	suite.SampleCharts = struct {
+		OldTag    *chart.Chart
+		NewTag    *chart.Chart
+		LatestTag *chart.Chart
+	}{OldTag: ch1, NewTag: ch2, LatestTag: ch2}
 }
 
 func (suite *RegistryGetterSuite) TearDownSuite() {
@@ -140,35 +172,35 @@ func (suite *RegistryGetterSuite) TestValidRegistryUrlWithImageTag() {
 	suite.Equal("1.2.3", ch.Metadata.Version)
 }
 
-func (suite *RegistryGetterSuite) TestErrorOnInvalidUrl() {
-	g := NewRegistryGetter(suite.RegistryClient)
-	_, err := g.Get("oci://registry")
-	suite.NotNil(err, "failed to retrieve chart")
-}
-
 func (suite *RegistryGetterSuite) TestAppendsVersionToURL() {
 	g := NewRegistryGetter(suite.RegistryClient)
-	u, err := url.ParseRequestURI("oci://registry/testrepo/testchart")
-	suite.Nil(err, "failed to parse OCI URL")
-	res, err := g.URL(u, "0.1.0")
-	suite.Nil(err, "failed to convert URL")
-	suite.Equal("oci://registry/testrepo/testchart:0.1.0", res)
+	u, err := url.ParseRequestURI(fmt.Sprintf("oci://%s/testrepo/testchart", suite.DockerRegistryHost))
+	suite.Nil(err, "failed to parse URI")
+	r, err := g.GetWithDetails(u, "0.1.0")
+	suite.Nil(err, "failed to retrieve chart")
+
+	ch, err := loader.LoadArchive(r.ChartContent)
+	suite.Nil(err, "failed to load chart")
+	suite.Equal(suite.SampleCharts.OldTag.Metadata.Version, ch.Metadata.Version)
 }
 
 func (suite *RegistryGetterSuite) TestDoesntOverrideTagOnURL() {
 	g := NewRegistryGetter(suite.RegistryClient)
-	u, err := url.ParseRequestURI("oci://registry/testrepo/testchart:latest")
+	u, err := url.ParseRequestURI(fmt.Sprintf("oci://%s/testrepo/testchart:latest", suite.DockerRegistryHost))
 	suite.Nil(err, "failed to parse OCI URL")
-	res, err := g.URL(u, "0.1.0")
-	suite.Nil(err, "failed to convert URL")
-	suite.Equal("oci://registry/testrepo/testchart:latest", res)
+	r, err := g.GetWithDetails(u, "0.1.0")
+	suite.Nil(err, "failed to retrieve chart")
+
+	ch, err := loader.LoadArchive(r.ChartContent)
+	suite.Nil(err, "failed to load chart")
+	suite.Equal(suite.SampleCharts.LatestTag.Metadata.Version, ch.Metadata.Version)
 }
 
 func (suite *RegistryGetterSuite) TestErrorsIfNeitherVersionNorURLIsProvided() {
 	g := NewRegistryGetter(suite.RegistryClient)
-	u, err := url.ParseRequestURI("oci://registry/testrepo/testchart")
+	u, err := url.ParseRequestURI(fmt.Sprintf("oci://%s/testrepo/testchart", suite.DockerRegistryHost))
 	suite.Nil(err, "failed to parse OCI URL")
-	_, err = g.URL(u, "")
+	_, err = g.GetWithDetails(u, "")
 	suite.NotNil(err, "URL conversion succeeded")
 }
 

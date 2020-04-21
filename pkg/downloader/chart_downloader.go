@@ -94,11 +94,6 @@ func (c *ChartDownloader) DownloadTo(ref, version, dest string) (string, *proven
 		return "", nil, err
 	}
 
-	requestURL, err := g.URL(u, version)
-	if err != nil {
-		return "", nil, err
-	}
-
 	data, err := g.GetWithDetails(u, version, c.Options...)
 	if err != nil {
 		return "", nil, err

@@ -51,7 +51,7 @@ func (t *TestHTTPGetter) GetWithDetails(u *url.URL, _ string, _ ...getter.Option
 
 	return getter.ChartResponse{
 		ChartContent: data,
-		Filename: filepath.Base(u.String()),
+		Filename:     filepath.Base(u.String()),
 	}, err
 }
 

@@ -135,7 +135,7 @@ func (g *CustomGetter) GetWithDetails(u *url.URL, version string, options ...get
 
 	return getter.ChartResponse{
 		ChartContent: data,
-		Filename: filepath.Base(u.String()),
+		Filename:     filepath.Base(u.String()),
 	}, err
 }
 

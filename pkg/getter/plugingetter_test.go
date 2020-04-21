@@ -16,12 +16,9 @@ limitations under the License.
 package getter
 
 import (
-	"net/url"
 	"runtime"
 	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 
 	"helm.sh/helm/v3/pkg/cli"
 )
@@ -101,16 +98,4 @@ func TestPluginSubCommands(t *testing.T) {
 	if got != expect {
 		t.Errorf("Expected %q, got %q", expect, got)
 	}
-}
-
-func TestPluginGetter_Filename(t *testing.T) {
-	g, err := NewHTTPGetter()
-	if err != nil {
-		t.Fatal(err)
-	}
-	u, err := url.Parse("test://foo/bar")
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.Equal(t, "bar", g.Filename(u, "0.1.0"))
 }

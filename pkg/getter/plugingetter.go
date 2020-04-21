@@ -91,7 +91,7 @@ func (p *pluginGetter) GetWithDetails(u *url.URL, version string, options ...Opt
 
 	return ChartResponse{
 		ChartContent: data,
-		Filename: filepath.Base(u.String()),
+		Filename:     filepath.Base(u.String()),
 	}, err
 }
 
