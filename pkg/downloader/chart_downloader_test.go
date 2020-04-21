@@ -432,9 +432,9 @@ func TestDownloadToFromOCIRepository(t *testing.T) {
 			getter.WithBasicAuth("username", "password"),
 		},
 	}
-	fname := "/testchart-1.2.3.tgz"
+	fname := "/testchart-0.1.0.tgz"
 	dest := ensure.TempDir(t)
-	where, _, err := c.DownloadTo(fmt.Sprintf("oci://%s/testrepo/testchart:1.2.3", dockerRegistryHost), "1.2.3", dest)
+	where, _, err := c.DownloadTo(fmt.Sprintf("oci://%s/testrepo/testchart:1.2.3", dockerRegistryHost), "0.1.0", dest)
 	if err != nil {
 		t.Fatal(err)
 	}

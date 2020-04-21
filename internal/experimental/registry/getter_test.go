@@ -53,7 +53,7 @@ type RegistryGetterSuite struct {
 	}
 }
 
-func (suite *RegistryGetterSuite) SetupTest() {
+func (suite *RegistryGetterSuite) SetupSuite() {
 	suite.CacheRootDir = testCacheRootDir
 	os.RemoveAll(suite.CacheRootDir)
 	os.Mkdir(suite.CacheRootDir, 0700)
@@ -100,7 +100,7 @@ func (suite *RegistryGetterSuite) SetupTest() {
 	// Registry config
 	config := &configuration.Configuration{}
 	port, err := test.GetFreePort()
-	suite.Nil(err, "no error finding free port for test registry")
+	suite.Nil(err, "failed to find free port for test registry")
 	suite.DockerRegistryHost = fmt.Sprintf("localhost:%d", port)
 	config.HTTP.Addr = fmt.Sprintf(":%d", port)
 	config.HTTP.DrainTimeout = time.Duration(10) * time.Second
@@ -112,7 +112,7 @@ func (suite *RegistryGetterSuite) SetupTest() {
 		},
 	}
 	dockerRegistry, err := registry.NewRegistry(context.Background(), config)
-	suite.Nil(err, "no error creating test registry")
+	suite.Nil(err, "failed to create test registry")
 
 	// Start Docker registry
 	go dockerRegistry.ListenAndServe()
@@ -154,11 +154,25 @@ func (suite *RegistryGetterSuite) SetupTest() {
 		NewTag    *chart.Chart
 		LatestTag *chart.Chart
 	}{OldTag: ch1, NewTag: ch2, LatestTag: ch2}
+
+	// the CI server is slow, this makes sure the registry is ready before a test runs
+	iterations := 0
+	maxIterations := 50
+	for {
+		iterations++
+		if iterations > maxIterations {
+			suite.T().Error(fmt.Sprintf("failed to fetch image after %d attempts", iterations))
+		}
+		err = suite.RegistryClient.PullChart(ref2Latest)
+		if err == nil {
+			break
+		}
+	}
 }
 
 func (suite *RegistryGetterSuite) TearDownSuite() {
-	os.RemoveAll(suite.CacheRootDir)
 	suite.RegistryClient.Logout(suite.DockerRegistryHost)
+	os.RemoveAll(suite.CacheRootDir)
 }
 
 func (suite *RegistryGetterSuite) TestValidRegistryUrlWithImageTag() {
@@ -194,6 +208,7 @@ func (suite *RegistryGetterSuite) TestDoesntOverrideTagOnURL() {
 	ch, err := loader.LoadArchive(r.ChartContent)
 	suite.Nil(err, "failed to load chart")
 	suite.Equal(suite.SampleCharts.LatestTag.Metadata.Version, ch.Metadata.Version)
+	suite.Equal("testchart-1.2.3.tgz", r.Filename)
 }
 
 func (suite *RegistryGetterSuite) TestErrorsIfNeitherVersionNorURLIsProvided() {

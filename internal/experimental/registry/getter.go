@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/getter"
 )
@@ -93,9 +94,14 @@ func (g *Getter) GetWithDetails(u *url.URL, version string, options ...getter.Op
 	}
 
 	res, err := g.Get(u.String(), options...)
+	if err != nil {
+		return getter.ChartResponse{}, err
+	}
+
+	ch, err := loader.LoadArchive(bytes.NewBuffer(res.Bytes()))
 	return getter.ChartResponse{
 		ChartContent: res,
-		Filename:     g.filename(u, version),
+		Filename:     g.filename(u, ch.Metadata.Version),
 	}, err
 }
 
