@@ -193,7 +193,7 @@ func (suite *RegistryGetterSuite) TestAppendsVersionToURL() {
 	r, err := g.GetWithDetails(u, "0.1.0")
 	suite.Nil(err, "failed to retrieve chart")
 
-	ch, err := loader.LoadArchive(r.ChartContent)
+	ch, err := loader.LoadArchive(r.Content)
 	suite.Nil(err, "failed to load chart")
 	suite.Equal(suite.SampleCharts.OldTag.Metadata.Version, ch.Metadata.Version)
 }
@@ -205,7 +205,7 @@ func (suite *RegistryGetterSuite) TestDoesntOverrideTagOnURL() {
 	r, err := g.GetWithDetails(u, "0.1.0")
 	suite.Nil(err, "failed to retrieve chart")
 
-	ch, err := loader.LoadArchive(r.ChartContent)
+	ch, err := loader.LoadArchive(r.Content)
 	suite.Nil(err, "failed to load chart")
 	suite.Equal(suite.SampleCharts.LatestTag.Metadata.Version, ch.Metadata.Version)
 	suite.Equal("testchart-1.2.3.tgz", r.Filename)

@@ -100,7 +100,7 @@ func (c *ChartDownloader) DownloadTo(ref, version, dest string) (string, *proven
 	}
 
 	destfile := filepath.Join(dest, data.Filename)
-	if err := fileutil.AtomicWriteFile(destfile, data.ChartContent, 0644); err != nil {
+	if err := fileutil.AtomicWriteFile(destfile, data.Content, 0644); err != nil {
 		return destfile, nil, err
 	}
 

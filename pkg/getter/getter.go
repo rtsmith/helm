@@ -40,8 +40,8 @@ type options struct {
 }
 
 type ChartResponse struct {
-	ChartContent *bytes.Buffer
-	Filename     string
+	Content  *bytes.Buffer
+	Filename string
 }
 
 // Option allows specifying various settings configurable by the user for overriding the defaults

@@ -47,8 +47,8 @@ func (g *HTTPGetter) GetWithDetails(u *url.URL, version string, options ...Optio
 	data, err := g.Get(u.String(), options...)
 
 	return ChartResponse{
-		ChartContent: data,
-		Filename:     filepath.Base(u.String()),
+		Content:  data,
+		Filename: filepath.Base(u.String()),
 	}, err
 }
 

@@ -100,8 +100,8 @@ func (g *Getter) GetWithDetails(u *url.URL, version string, options ...getter.Op
 
 	ch, err := loader.LoadArchive(bytes.NewBuffer(res.Bytes()))
 	return getter.ChartResponse{
-		ChartContent: res,
-		Filename:     g.filename(u, ch.Metadata.Version),
+		Content:  res,
+		Filename: g.filename(u, ch.Metadata.Version),
 	}, err
 }
 
