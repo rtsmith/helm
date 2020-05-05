@@ -20,8 +20,6 @@ import (
 	"crypto/tls"
 	"io"
 	"net/http"
-	"net/url"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 
@@ -41,15 +39,6 @@ func (g *HTTPGetter) Get(href string, options ...Option) (*bytes.Buffer, error) 
 		opt(&g.opts)
 	}
 	return g.get(href)
-}
-
-func (g *HTTPGetter) GetWithDetails(u *url.URL, version string, options ...Option) (ChartResponse, error) {
-	data, err := g.Get(u.String(), options...)
-
-	return ChartResponse{
-		Content:  data,
-		Filename: filepath.Base(u.String()),
-	}, err
 }
 
 func (g *HTTPGetter) get(href string) (*bytes.Buffer, error) {

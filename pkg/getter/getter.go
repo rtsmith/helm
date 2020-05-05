@@ -18,7 +18,6 @@ package getter
 
 import (
 	"bytes"
-	"net/url"
 
 	"github.com/pkg/errors"
 
@@ -37,11 +36,6 @@ type options struct {
 	username              string
 	password              string
 	userAgent             string
-}
-
-type ChartResponse struct {
-	Content  *bytes.Buffer
-	Filename string
 }
 
 // Option allows specifying various settings configurable by the user for overriding the defaults
@@ -91,8 +85,6 @@ func WithTLSClientConfig(certFile, keyFile, caFile string) Option {
 type Getter interface {
 	// Get file content by url string
 	Get(url string, options ...Option) (*bytes.Buffer, error)
-	// Get file content and metadata by url
-	GetWithDetails(url *url.URL, version string, options ...Option) (ChartResponse, error)
 }
 
 // Constructor is the function for every getter which creates a specific instance

@@ -21,7 +21,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -128,15 +127,6 @@ func (g *CustomGetter) Get(href string, options ...getter.Option) (*bytes.Buffer
 	}
 	g.repoUrls = append(g.repoUrls, href)
 	return bytes.NewBuffer(indexBytes), nil
-}
-
-func (g *CustomGetter) GetWithDetails(u *url.URL, version string, options ...getter.Option) (getter.ChartResponse, error) {
-	data, err := g.Get(u.String(), options...)
-
-	return getter.ChartResponse{
-		Content:  data,
-		Filename: filepath.Base(u.String()),
-	}, err
 }
 
 func TestIndexCustomSchemeDownload(t *testing.T) {

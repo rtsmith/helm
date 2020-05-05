@@ -20,10 +20,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
@@ -32,7 +30,7 @@ import (
 	auth "github.com/deislabs/oras/pkg/auth/docker"
 	"github.com/docker/distribution/configuration"
 	"github.com/docker/distribution/registry"
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 
 	"helm.sh/helm/v3/internal/test"
@@ -40,46 +38,31 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 )
 
-type RegistryGetterSuite struct {
-	suite.Suite
-	Out                io.Writer
-	DockerRegistryHost string
-	CacheRootDir       string
-	RegistryClient     *Client
-	SampleCharts       struct {
-		OldTag    *chart.Chart
-		NewTag    *chart.Chart
-		LatestTag *chart.Chart
-	}
-}
-
-func (suite *RegistryGetterSuite) SetupSuite() {
-	suite.CacheRootDir = testCacheRootDir
-	os.RemoveAll(suite.CacheRootDir)
-	os.Mkdir(suite.CacheRootDir, 0700)
+func TestValidRegistryUrlWithImageTag(t *testing.T) {
+	os.RemoveAll(testCacheRootDir)
+	os.Mkdir(testCacheRootDir, 0700)
 
 	var out bytes.Buffer
-	suite.Out = &out
-	credentialsFile := filepath.Join(suite.CacheRootDir, CredentialsFileBasename)
+	credentialsFile := filepath.Join(testCacheRootDir, CredentialsFileBasename)
 
 	client, err := auth.NewClient(credentialsFile)
-	suite.Nil(err, "no error creating auth client")
+	assert.Nil(t, err, "no error creating auth client")
 
 	resolver, err := client.Resolver(context.Background(), http.DefaultClient, false)
-	suite.Nil(err, "no error creating resolver")
+	assert.Nil(t, err, "no error creating resolver")
 
 	// create cache
 	cache, err := NewCache(
 		CacheOptDebug(true),
-		CacheOptWriter(suite.Out),
-		CacheOptRoot(filepath.Join(suite.CacheRootDir, CacheRootDir)),
+		CacheOptWriter(&out),
+		CacheOptRoot(filepath.Join(testCacheRootDir, CacheRootDir)),
 	)
-	suite.Nil(err, "no error creating cache")
+	assert.Nil(t, err, "no error creating cache")
 
 	// init test client
-	suite.RegistryClient, err = NewClient(
+	registryClient, err := NewClient(
 		ClientOptDebug(true),
-		ClientOptWriter(suite.Out),
+		ClientOptWriter(&out),
 		ClientOptAuthorizer(&Authorizer{
 			Client: client,
 		}),
@@ -88,20 +71,20 @@ func (suite *RegistryGetterSuite) SetupSuite() {
 		}),
 		ClientOptCache(cache),
 	)
-	suite.Nil(err, "no error creating registry client")
+	assert.Nil(t, err, "no error creating registry client")
 
 	// create htpasswd file (w BCrypt, which is required)
 	pwBytes, err := bcrypt.GenerateFromPassword([]byte(testPassword), bcrypt.DefaultCost)
-	suite.Nil(err, "no error generating bcrypt password for test htpasswd file")
-	htpasswdPath := filepath.Join(suite.CacheRootDir, testHtpasswdFileBasename)
+	assert.Nil(t, err, "no error generating bcrypt password for test htpasswd file")
+	htpasswdPath := filepath.Join(testCacheRootDir, testHtpasswdFileBasename)
 	err = ioutil.WriteFile(htpasswdPath, []byte(fmt.Sprintf("%s:%s\n", testUsername, string(pwBytes))), 0644)
-	suite.Nil(err, "no error creating test htpasswd file")
+	assert.Nil(t, err, "no error creating test htpasswd file")
 
 	// Registry config
 	config := &configuration.Configuration{}
 	port, err := test.GetFreePort()
-	suite.Nil(err, "failed to find free port for test registry")
-	suite.DockerRegistryHost = fmt.Sprintf("localhost:%d", port)
+	assert.Nil(t, err, "failed to find free port for test registry")
+	dockerRegistryHost := fmt.Sprintf("localhost:%d", port)
 	config.HTTP.Addr = fmt.Sprintf(":%d", port)
 	config.HTTP.DrainTimeout = time.Duration(10) * time.Second
 	config.Storage = map[string]configuration.Parameters{"inmemory": map[string]interface{}{}}
@@ -112,113 +95,35 @@ func (suite *RegistryGetterSuite) SetupSuite() {
 		},
 	}
 	dockerRegistry, err := registry.NewRegistry(context.Background(), config)
-	suite.Nil(err, "failed to create test registry")
+	assert.Nil(t, err, "failed to create test registry")
 
 	// Start Docker registry
 	go dockerRegistry.ListenAndServe()
-	suite.RegistryClient.Login(suite.DockerRegistryHost, testUsername, testPassword, false)
+	registryClient.Login(dockerRegistryHost, testUsername, testPassword, false)
 
-	ref1, _ := ParseReference(fmt.Sprintf("%s/testrepo/testchart:0.1.0", suite.DockerRegistryHost))
-	ref2, _ := ParseReference(fmt.Sprintf("%s/testrepo/testchart:1.2.3", suite.DockerRegistryHost))
-	ref2Latest, _ := ParseReference(fmt.Sprintf("%s/testrepo/testchart:latest", suite.DockerRegistryHost))
+	ref, _ := ParseReference(fmt.Sprintf("%s/testrepo/testchart:1.2.3", dockerRegistryHost))
 
-	ch1 := &chart.Chart{}
-	ch1.Metadata = &chart.Metadata{
-		APIVersion: "v1",
-		Name:       "testchart",
-		Version:    "0.1.0",
-	}
-	err = suite.RegistryClient.SaveChart(ch1, ref1)
-	suite.Nil(err)
-	err = suite.RegistryClient.PushChart(ref1)
-	suite.Nil(err)
-
-	ch2 := &chart.Chart{}
-	ch2.Metadata = &chart.Metadata{
+	ch := &chart.Chart{}
+	ch.Metadata = &chart.Metadata{
 		APIVersion: "v1",
 		Name:       "testchart",
 		Version:    "1.2.3",
 	}
 
-	err = suite.RegistryClient.SaveChart(ch2, ref2)
-	suite.Nil(err)
-	err = suite.RegistryClient.PushChart(ref2)
-	suite.Nil(err)
-	err = suite.RegistryClient.SaveChart(ch2, ref2Latest)
-	suite.Nil(err)
-	err = suite.RegistryClient.PushChart(ref2Latest)
-	suite.Nil(err)
+	err = registryClient.SaveChart(ch, ref)
+	assert.NoError(t, err)
+	err = registryClient.PushChart(ref)
+	assert.NoError(t, err)
 
-	suite.SampleCharts = struct {
-		OldTag    *chart.Chart
-		NewTag    *chart.Chart
-		LatestTag *chart.Chart
-	}{OldTag: ch1, NewTag: ch2, LatestTag: ch2}
+	g := NewRegistryGetter(registryClient)
+	res, err := g.Get(fmt.Sprintf("oci://%s/testrepo/testchart:1.2.3", dockerRegistryHost))
+	assert.NoError(t, err, "failed to retrieve chart")
 
-	// the CI server is slow, this makes sure the registry is ready before a test runs
-	iterations := 0
-	maxIterations := 50
-	for {
-		iterations++
-		if iterations > maxIterations {
-			suite.T().Error(fmt.Sprintf("failed to fetch image after %d attempts", iterations))
-		}
-		err = suite.RegistryClient.PullChart(ref2Latest)
-		if err == nil {
-			break
-		}
-	}
-}
+	downloadedChart, err := loader.LoadArchive(res)
+	assert.NoError(t, err, "failed to load archive")
+	assert.Equal(t, "testchart", downloadedChart.Name())
+	assert.Equal(t, "1.2.3", downloadedChart.Metadata.Version)
 
-func (suite *RegistryGetterSuite) TearDownSuite() {
-	suite.RegistryClient.Logout(suite.DockerRegistryHost)
-	os.RemoveAll(suite.CacheRootDir)
-}
-
-func (suite *RegistryGetterSuite) TestValidRegistryUrlWithImageTag() {
-	g := NewRegistryGetter(suite.RegistryClient)
-	res, err := g.Get(fmt.Sprintf("oci://%s/testrepo/testchart:1.2.3", suite.DockerRegistryHost))
-	suite.Nil(err, "failed to retrieve chart")
-
-	ch, err := loader.LoadArchive(res)
-	suite.Nil(err, "failed to load archive")
-	suite.Equal("testchart", ch.Name())
-	suite.Equal("1.2.3", ch.Metadata.Version)
-}
-
-func (suite *RegistryGetterSuite) TestAppendsVersionToURL() {
-	g := NewRegistryGetter(suite.RegistryClient)
-	u, err := url.ParseRequestURI(fmt.Sprintf("oci://%s/testrepo/testchart", suite.DockerRegistryHost))
-	suite.Nil(err, "failed to parse URI")
-	r, err := g.GetWithDetails(u, "0.1.0")
-	suite.Nil(err, "failed to retrieve chart")
-
-	ch, err := loader.LoadArchive(r.Content)
-	suite.Nil(err, "failed to load chart")
-	suite.Equal(suite.SampleCharts.OldTag.Metadata.Version, ch.Metadata.Version)
-}
-
-func (suite *RegistryGetterSuite) TestDoesntOverrideTagOnURL() {
-	g := NewRegistryGetter(suite.RegistryClient)
-	u, err := url.ParseRequestURI(fmt.Sprintf("oci://%s/testrepo/testchart:latest", suite.DockerRegistryHost))
-	suite.Nil(err, "failed to parse OCI URL")
-	r, err := g.GetWithDetails(u, "0.1.0")
-	suite.Nil(err, "failed to retrieve chart")
-
-	ch, err := loader.LoadArchive(r.Content)
-	suite.Nil(err, "failed to load chart")
-	suite.Equal(suite.SampleCharts.LatestTag.Metadata.Version, ch.Metadata.Version)
-	suite.Equal("testchart-1.2.3.tgz", r.Filename)
-}
-
-func (suite *RegistryGetterSuite) TestErrorsIfNeitherVersionNorURLIsProvided() {
-	g := NewRegistryGetter(suite.RegistryClient)
-	u, err := url.ParseRequestURI(fmt.Sprintf("oci://%s/testrepo/testchart", suite.DockerRegistryHost))
-	suite.Nil(err, "failed to parse OCI URL")
-	_, err = g.GetWithDetails(u, "")
-	suite.NotNil(err, "URL conversion succeeded")
-}
-
-func TestRegistryGetterSuite(t *testing.T) {
-	suite.Run(t, &RegistryGetterSuite{})
+	registryClient.Logout(dockerRegistryHost)
+	os.RemoveAll(testCacheRootDir)
 }

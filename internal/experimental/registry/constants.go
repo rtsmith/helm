@@ -23,8 +23,8 @@ const (
 	// HelmChartContentLayerMediaType is the reserved media type for Helm chart package content
 	HelmChartContentLayerMediaType = "application/tar+gzip"
 
-	// OciProtocol is the protocol used for OCI registry URLs
-	OciProtocol = "oci"
+	// OCIProtocol is the protocol used for OCI registry URLs
+	OCIProtocol = "oci"
 )
 
 // KnownMediaTypes returns a list of layer mediaTypes that the Helm client knows about

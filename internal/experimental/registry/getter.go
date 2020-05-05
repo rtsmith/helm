@@ -18,15 +18,9 @@ package registry // import "helm.sh/helm/v3/internal/experimental/registry"
 
 import (
 	"bytes"
-	"errors"
-	"fmt"
-	"net/url"
-	"path/filepath"
-	"strings"
-
-	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/getter"
+	"net/url"
 )
 
 // Getter is the HTTP(/S) backend handler for OCI image registries.
@@ -40,7 +34,7 @@ func NewRegistryGetter(c *Client) *Getter {
 
 func NewRegistryGetterProvider(c *Client) getter.Provider {
 	return getter.Provider{
-		Schemes: []string{OciProtocol},
+		Schemes: []string{OCIProtocol},
 		New: func(options ...getter.Option) (g getter.Getter, e error) {
 			return NewRegistryGetter(c), nil
 		},
@@ -80,33 +74,4 @@ func (g *Getter) Get(href string, options ...getter.Option) (*bytes.Buffer, erro
 	err = chartutil.Write(c, buf)
 
 	return buf, err
-}
-
-func (g *Getter) GetWithDetails(u *url.URL, version string, options ...getter.Option) (getter.ChartResponse, error) {
-	parts := strings.Split(filepath.Base(u.Path), ":")
-
-	if len(parts) == 1 && version == "" {
-		return getter.ChartResponse{}, errors.New("no version or tag provided")
-	}
-
-	if len(parts) != 2 {
-		u.Path = fmt.Sprintf("%s:%s", u.Path, version)
-	}
-
-	res, err := g.Get(u.String(), options...)
-	if err != nil {
-		return getter.ChartResponse{}, err
-	}
-
-	ch, err := loader.LoadArchive(bytes.NewBuffer(res.Bytes()))
-	return getter.ChartResponse{
-		Content:  res,
-		Filename: g.filename(u, ch.Metadata.Version),
-	}, err
-}
-
-func (g *Getter) filename(u *url.URL, version string) string {
-	parts := strings.Split(filepath.Base(u.Path), ":")
-
-	return fmt.Sprintf("%s-%s.tgz", parts[0], version)
 }

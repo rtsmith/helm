@@ -17,6 +17,7 @@ package downloader
 
 import (
 	"fmt"
+	"helm.sh/helm/v3/internal/experimental/registry"
 	"io"
 	"net/url"
 	"os"
@@ -94,13 +95,32 @@ func (c *ChartDownloader) DownloadTo(ref, version, dest string) (string, *proven
 		return "", nil, err
 	}
 
-	data, err := g.GetWithDetails(u, version, c.Options...)
+	downloadUrl := u.String()
+	destfile := filepath.Join(dest, filepath.Base(downloadUrl))
+
+	if _, ok := g.(*registry.Getter); ok {
+		parts := strings.Split(filepath.Base(u.Path), ":")
+
+		if len(parts) == 1 && version == "" {
+			return "", nil, errors.New("no version or tag provided")
+		}
+
+		if len(parts) != 2 {
+			parts = append(parts, version)
+			u.Path = fmt.Sprintf("%s:%s", u.Path, version)
+		}
+
+		downloadUrl = u.String()
+		destfile = filepath.Join(dest, fmt.Sprintf("%s-%s.tgz", parts[0], parts[1]))
+	}
+
+	data, err := g.Get(downloadUrl, c.Options...)
+
 	if err != nil {
 		return "", nil, err
 	}
 
-	destfile := filepath.Join(dest, data.Filename)
-	if err := fileutil.AtomicWriteFile(destfile, data.Content, 0644); err != nil {
+	if err := fileutil.AtomicWriteFile(destfile, data, 0644); err != nil {
 		return destfile, nil, err
 	}
 

@@ -402,7 +402,7 @@ Loop:
 		}
 
 		// if repo is an OCI registry, continue
-		if strings.HasPrefix(dd.Repository, fmt.Sprintf("%s://", registry.OciProtocol)) {
+		if strings.HasPrefix(dd.Repository, fmt.Sprintf("%s://", registry.OCIProtocol)) {
 			continue
 		}
 
@@ -579,7 +579,7 @@ func (m *Manager) findChartURL(name, version, repoURL string, repos map[string]*
 		return
 	}
 
-	if u.Scheme == registry.OciProtocol {
+	if u.Scheme == registry.OCIProtocol {
 		chartURL = repoURL
 		return
 	}

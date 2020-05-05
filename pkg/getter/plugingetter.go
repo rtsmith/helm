@@ -17,7 +17,6 @@ package getter
 
 import (
 	"bytes"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -84,15 +83,6 @@ func (p *pluginGetter) Get(href string, options ...Option) (*bytes.Buffer, error
 		return nil, err
 	}
 	return buf, nil
-}
-
-func (p *pluginGetter) GetWithDetails(u *url.URL, version string, options ...Option) (ChartResponse, error) {
-	data, err := p.Get(u.String(), options...)
-
-	return ChartResponse{
-		Content:  data,
-		Filename: filepath.Base(u.String()),
-	}, err
 }
 
 // NewPluginGetter constructs a valid plugin getter
