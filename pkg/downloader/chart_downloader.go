@@ -17,7 +17,6 @@ package downloader
 
 import (
 	"fmt"
-	"helm.sh/helm/v3/internal/experimental/registry"
 	"io"
 	"net/url"
 	"os"
@@ -26,6 +25,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"helm.sh/helm/v3/internal/experimental/registry"
 	"helm.sh/helm/v3/internal/fileutil"
 	"helm.sh/helm/v3/internal/urlutil"
 	"helm.sh/helm/v3/pkg/getter"
