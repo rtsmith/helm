@@ -96,7 +96,7 @@ func (c *ChartDownloader) DownloadTo(ref, version, dest string) (string, *proven
 	}
 
 	downloadUrl := u.String()
-	destfile := filepath.Join(dest, filepath.Base(downloadUrl))
+	name := filepath.Base(u.Path)
 
 	if _, ok := g.(*registry.Getter); ok {
 		parts := strings.Split(filepath.Base(u.Path), ":")
@@ -111,7 +111,7 @@ func (c *ChartDownloader) DownloadTo(ref, version, dest string) (string, *proven
 		}
 
 		downloadUrl = u.String()
-		destfile = filepath.Join(dest, fmt.Sprintf("%s-%s.tgz", parts[0], parts[1]))
+		name = fmt.Sprintf("%s-%s.tgz", parts[0], parts[1])
 	}
 
 	data, err := g.Get(downloadUrl, c.Options...)
@@ -120,6 +120,7 @@ func (c *ChartDownloader) DownloadTo(ref, version, dest string) (string, *proven
 		return "", nil, err
 	}
 
+	destfile := filepath.Join(dest, name)
 	if err := fileutil.AtomicWriteFile(destfile, data, 0644); err != nil {
 		return destfile, nil, err
 	}
